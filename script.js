@@ -1,4 +1,10 @@
-const bannerText = `
+const terminal = document.getElementById('terminal');
+const input = document.getElementById('input');
+
+let currentDir = '~/';
+let inHelpView = false;
+
+const banner = `
 ██╗██████╗  ██████╗ ███╗   ██╗██╗   ██╗███████╗██╗██╗     
 ██║██╔══██╗██╔═══██╗████╗  ██║██║   ██║██╔════╝██║██║     
 ██║██████╔╝██║   ██║██╔██╗ ██║██║   ██║█████╗  ██║██║     
@@ -7,146 +13,218 @@ const bannerText = `
 ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚═╝╚══════╝
 `;
 
-const banner = document.getElementById('banner');
-const output = document.getElementById('output');
-const input = document.getElementById('cmdInput');
-
-let typingIndex = 0;
-function typeBanner() {
-  if (typingIndex < bannerText.length) {
-    banner.textContent += bannerText[typingIndex++];
-    setTimeout(typeBanner, 3);
-  }
-}
-typeBanner();
-
-const commands = {
-  whoami: `ironveil`,
-  date: new Date().toString(),
-  version: `IronVeil v0.1.2-alpha`,
-  uname: `IronVeil Kernel 0.1 x86_64`,
-  exit: `Session terminated.`,
-};
-
 const helpText = `
-IRONVEIL LINUX SHELL - COMMAND HELP
+Available commands:
 
-Basic Commands:
-  ls         List directory contents
-  man        Display the manual
-  cat        Display file contents
-  help       Show this help menu
-  clear      Clear the screen
-  whoami     Show current user
-  date       Show system date
-  version    Show OS version
-  uname      System information
-  echo       Echo text
-  exit       Terminate session
+Navigation and Files:
+ls        - Lists the contents of a directory.
+pwd       - Prints the current working directory.
+cd        - Changes the current directory.
+mkdir     - Creates new directories.
+rmdir     - Removes empty directories.
+cp        - Copies files or directories.
+mv        - Moves or renames files or directories.
+rm        - Deletes files or directories.
+touch     - Creates empty files or updates file timestamps.
 
-File Commands:
-  pwd        Print working directory
-  cd         Change directory
-  mkdir      Create directory
-  rmdir      Remove directory
-  cp         Copy files
-  mv         Move/rename files
-  rm         Remove files
-  touch      Create empty file
+Viewing and Editing:
+cat       - Displays the contents of a file.
+less      - Displays file contents page by page.
+head      - Displays the beginning of a file.
+tail      - Displays the end of a file.
+grep      - Searches for patterns within files.
+sort      - Sorts the lines of a text file.
 
-Viewing Commands:
-  less       Scroll file view
-  head       Show first lines
-  tail       Show last lines
-  grep       Search text
-  sort       Sort lines
-
-System Commands:
-  df         Disk space
-  du         Disk usage
-  top        Task manager
-  ps         Process status
+System Info:
+uname     - Displays system information.
+whoami    - Shows the current username.
+df        - Reports disk space usage.
+du        - Estimates file space usage.
+top       - Displays real-time process info.
+ps        - Shows running processes.
 
 Permissions:
-  chmod      Change permissions
-  chown      Change ownership
+chmod     - Changes file permissions.
+chown     - Changes file ownership.
 
 Networking:
-  ping       Ping network
-  wget       Download file
-  curl       Transfer data
-  ssh        Secure shell
+ping      - Tests network connectivity.
+wget      - Downloads files.
+curl      - Transfers data with URLs.
+ssh       - Connects to remote servers.
 
 Archiving:
-  tar        Archive tool
-  gzip       Compress
-  gunzip     Decompress
-  zip        Create zip
-  unzip      Extract zip
+tar       - Archives and extracts files.
+gzip/gunzip - Compresses/decompresses files.
+zip/unzip - Zip compression and decompression.
 
-(:q to quit help)
+Help:
+man       - Displays manual pages.
+info      - Displays info pages.
 `;
 
-let helpMode = false;
+const writeToTerminal = (text) => {
+  terminal.innerHTML += `${text}\n`;
+  terminal.scrollTop = terminal.scrollHeight;
+};
 
-input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const command = input.value.trim();
-    handleCommand(command);
-    input.value = '';
-  }
-});
+const showPrompt = () => {
+  terminal.innerHTML += `<span class="prompt">ironveil@cli:${currentDir}$</span> `;
+};
 
-function handleCommand(cmd) {
-  const cmdLine = document.createElement('div');
-  cmdLine.textContent = `ironveil@localhost:~$ ${cmd}`;
-  cmdLine.className = 'prompt';
-  output.appendChild(cmdLine);
+const handleCommand = (command) => {
+  const args = command.trim().split(/\s+/);
+  const base = args[0];
 
-  let msg = document.createElement('div');
-
-  if (helpMode) {
-    if (cmd === ':q') {
-      helpMode = false;
-      msg.textContent = '(Exited help)';
-      msg.className = 'output';
-      output.appendChild(msg);
-    } else {
-      msg.textContent = '(Help open. Type :q to exit)';
-      msg.className = 'output';
-      output.appendChild(msg);
-    }
+  if (inHelpView && base === ':q') {
+    inHelpView = false;
+    writeToTerminal('');
     return;
   }
 
-  switch (cmd) {
+  switch (base) {
     case 'clear':
-      output.innerHTML = '';
+      terminal.innerHTML = '';
       return;
     case 'help':
-      helpMode = true;
-      msg.textContent = helpText;
-      msg.className = 'output help';
-      break;
+      writeToTerminal(helpText);
+      return;
+    case 'ls':
+      writeToTerminal('bin  boot  dev  etc  home  lib  opt  root  usr  var');
+      return;
+    case 'pwd':
+      writeToTerminal(currentDir);
+      return;
+    case 'cd':
+      currentDir = args[1] || '~/';
+      return;
+    case 'mkdir':
+      writeToTerminal(`mkdir: created directory '${args[1] || 'newdir'}'`);
+      return;
+    case 'rmdir':
+      writeToTerminal(`rmdir: removed directory '${args[1] || 'dir'}'`);
+      return;
+    case 'cp':
+      writeToTerminal(`cp: copied '${args[1]}' to '${args[2]}'`);
+      return;
+    case 'mv':
+      writeToTerminal(`mv: moved '${args[1]}' to '${args[2]}'`);
+      return;
+    case 'rm':
+      writeToTerminal(`rm: deleted '${args[1] || 'file.txt'}'`);
+      return;
+    case 'touch':
+      writeToTerminal(`touch: created file '${args[1] || 'new.txt'}'`);
+      return;
+    case 'cat':
+      writeToTerminal('This is a dummy file.\nLorem ipsum dolor sit amet.');
+      return;
+    case 'head':
+      writeToTerminal('First few lines...');
+      return;
+    case 'tail':
+      writeToTerminal('Last few lines...');
+      return;
+    case 'less':
+    case 'man':
+      inHelpView = true;
+      writeToTerminal(helpText);
+      writeToTerminal('\n(press :q to quit)');
+      return;
+    case 'grep':
+      writeToTerminal('Matched pattern: dummy result');
+      return;
+    case 'sort':
+      writeToTerminal('1\n2\n3\nA\nB\nC');
+      return;
+    case 'uname':
+      writeToTerminal('IronVeil Kernel 1.0.0');
+      return;
+    case 'whoami':
+      writeToTerminal('ironveil');
+      return;
+    case 'df':
+      writeToTerminal('/dev/sda1    50G   20G   30G  40% /');
+      return;
+    case 'du':
+      writeToTerminal('4.0K    ./docs\n8.0K    ./src');
+      return;
+    case 'top':
+      writeToTerminal('top - simulated output\nPID  CPU  MEM  CMD');
+      return;
+    case 'ps':
+      writeToTerminal('PID  TTY          TIME CMD\n1234 pts/0    00:00:01 bash');
+      return;
+    case 'chmod':
+      writeToTerminal('Permissions changed.');
+      return;
+    case 'chown':
+      writeToTerminal('Owner changed.');
+      return;
+    case 'ping':
+      writeToTerminal('Pinging 127.0.0.1... Success');
+      return;
+    case 'wget':
+      writeToTerminal('wget: downloaded dummy.txt');
+      return;
+    case 'curl':
+      writeToTerminal('curl: fetched data from URL');
+      return;
+    case 'ssh':
+      writeToTerminal('ssh: connected to dummy@host');
+      return;
+    case 'tar':
+      writeToTerminal('tar: archive created');
+      return;
+    case 'gzip':
+    case 'gunzip':
+      writeToTerminal(`${base}: compression done`);
+      return;
+    case 'zip':
+    case 'unzip':
+      writeToTerminal(`${base}: archive processed`);
+      return;
+    case 'info':
+      writeToTerminal('Info page loaded.');
+      return;
+    case 'version':
+      writeToTerminal('IronVeil CLI version 1.0.0');
+      return;
+    case 'echo':
+      writeToTerminal(args.slice(1).join(' '));
+      return;
+    case 'exit':
+      writeToTerminal('Session terminated.');
+      input.disabled = true;
+      return;
+    case 'rm':
     case 'rm -rf /':
-      msg.textContent = "Nice try mortal. Only root can destroy the universe.";
-      msg.className = 'output danger';
-      break;
     case 'sudo rm -rf /':
-      msg.textContent = "AI detected attempted existential erasure. Please seek sysadmin therapy.";
-      msg.className = 'output danger';
-      break;
+      writeToTerminal("💣 Just kidding! IronVeil is indestructible.");
+      return;
     default:
-      if (cmd.startsWith('echo ')) {
-        msg.textContent = cmd.slice(5);
-      } else if (commands[cmd]) {
-        msg.textContent = commands[cmd];
-      } else {
-        msg.textContent = `Command not found: ${cmd}`;
-      }
+      writeToTerminal(`${base}: command not found`);
   }
+};
 
-  msg.className = msg.className || 'output';
-  output.appendChild(msg);
-  window.scrollTo(0, document.body.scrollHeight);
-}
+const bootTerminal = async () => {
+  terminal.innerHTML = '';
+  for (let char of banner) {
+    terminal.innerHTML += char;
+    await new Promise(r => setTimeout(r, 3));
+  }
+  terminal.innerHTML += '\n\nWelcome to IronVeil OS. Type "help" to get started.\n\n';
+  showPrompt();
+};
+
+input.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    const command = input.value.trim();
+    terminal.innerHTML += input.value + '\n';
+    handleCommand(command);
+    input.value = '';
+    if (!inHelpView) showPrompt();
+  }
+});
+
+bootTerminal();
