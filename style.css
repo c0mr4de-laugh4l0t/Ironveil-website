@@ -1,0 +1,42 @@
+body {
+  background-color: #1a0f00;
+  color: #d2691e;
+  font-family: 'Courier New', monospace;
+  margin: 0;
+  padding: 10px;
+}
+
+#terminal {
+  max-width: 800px;
+  margin: auto;
+  padding-top: 20px;
+}
+
+.prompt {
+  color: #ffb347;
+}
+
+#input-line {
+  display: flex;
+  align-items: center;
+}
+
+#cmdInput {
+  background: transparent;
+  border: none;
+  color: #d2691e;
+  font-family: monospace;
+  font-size: 1em;
+  flex-grow: 1;
+  outline: none;
+}
+
+.output {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.output.danger {
+  color: red;
+  font-weight: bold;
+}
